@@ -1,0 +1,12 @@
+# Runtime dependencies for morph.py and face_morphing.ipynb
+numpy
+opencv-python
+dlib
+Pillow
+onnxruntime
+matplotlib
+
+# Notebook interface and Python kernel
+jupyterlab
+ipykernel
+ipython

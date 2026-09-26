@@ -1,105 +1,109 @@
-# Face Morphing with Python
-Face morphing is a technique that involves blending two or more images of faces together in order to create a new image that appears to be a hybrid of the original faces. [Code Source](https://github.com/Azmarie/Face-Morphing/)
-### Libraries Used:
- 1. glob 
- 2. os 
- 3. sys 
- 4. PIL 
- 5. OpenCV 
- 6. imutils 
- 7. dlib 
- 8. skimage 
- 9. matplotlib 
- 10. numpy  
- 11. random
- 12. math
- 
- #### Concepts & Ideas used:
-  1. Basic Image data manipulation and processing using OpenCV and PIL
-  2. Facial Landmarks Recognition using pretrained models from dlib library
-  3. Delaunay triangulation using OpenCV
-  4. Advanced morphology for blending and warping using OpenCV
+# Face Morphing Tutorial
 
-[Example 1](https://i.imgur.com/FwNK3YW.mp4)
-[Example 2](https://i.imgur.com/fLD62Ez.mp4)
-[Example 3](https://i.imgur.com/gJzfA89.mp4)
+Learn face morphing step by step in `face_morphing.ipynb`, or use `morph.py` to
+create a sequence from two or more images.
 
-##### Make sure to change the paths to the images used, all files are linked on [Google Drive](https://drive.google.com/drive/folders/1n7iRsWiVVOQiN9m8oxz8yjI2mHFY4ZeC?usp=share_link). Images are uploaded on this repo.
+## Installation
 
-
-
-
-
-
-## Local beginner tutorial
-
-`face_morphing.ipynb` has been reorganized as a visual, locally runnable tutorial. It includes landmark overlays, a shared triangle mesh, alpha examples, a cross-fade comparison, and an exported GIF.
+You need Git and Python. The project has been run with Python 3.12.
+Run these commands in a terminal:
 
 ```bash
-cd ~/Development/face-morphing-tutorial
+git clone https://github.com/CyrusYang-cy/Face-Morphing-Tutorial.git
+cd Face-Morphing-Tutorial
+python -m venv .venv
+```
+
+Activate the environment:
+
+```bash
+# macOS / Linux
+source .venv/bin/activate
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+```
+
+Install the Python dependencies for both the notebook and script:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+If your system uses `python3` instead of `python`, use that command to create
+the environment. If installing `dlib` requires a source build, install CMake
+and a C++ compiler first. On macOS, the compiler is available through
+`xcode-select --install`; on Windows, use Visual Studio Build Tools with the
+C++ workload. These system tools are not installed by `requirements.txt`.
+
+### Download the model
+
+The dlib landmark model, `models/shape_predictor_68_face_landmarks.dat`, is
+included in the repository. The face-parsing ONNX model is **not included**;
+download it once before running either the notebook or script:
+
+```bash
+python -c "import urllib.request; urllib.request.urlretrieve('https://github.com/yakhyo/face-parsing/releases/download/weights/resnet18.onnx', 'models/face_parsing_resnet18.onnx')"
+```
+
+Both files must be in `models/`. Image processing runs locally.
+
+## Run the Jupyter notebook
+
+From the repository folder, with the environment activated:
+
+```bash
 python -m jupyter lab face_morphing.ipynb
 ```
 
-Use an environment with NumPy, OpenCV, dlib, Pillow, Matplotlib, and Jupyter. The existing Anaconda environment was used to execute the default example successfully. Original upstream files remain available in Git history. Outputs go to `tutorial_output/`.
+1. Select the two image filenames using `IMAGE_A` and `IMAGE_B` in the first
+   code cell. You can also change the canvas size and frame count there.
+2. Choose **Run → Run All Cells**.
+3. View the figures and animation in the notebook. Saved results are in
+   `output/`, including `face_morph_tutorial.gif`.
 
-### Ear and neck extension (section 3.3)
+Launch Jupyter from the repository folder so relative input/model paths work.
+If you use another Jupyter installation, select a kernel containing the
+packages in `requirements.txt`.
 
-Section 3 now compares 76 base points, 84 points with forehead controls, and up to 96 points with ear/neck contours derived from BiSeNet face parsing. The final figure shows both images at all three stages. These contour samples are approximate correspondences; inspect masks, missing regions, and crop warnings before experimental use.
+## Run the Python script
 
-The ONNX model is already downloaded locally. For a fresh checkout:
-
-```bash
-python -m pip install onnxruntime
-mkdir -p models
-curl -L --fail https://github.com/yakhyo/face-parsing/releases/download/weights/resnet18.onnx -o models/face_parsing_resnet18.onnx
-```
-
-Model source and inference conventions: https://github.com/yakhyo/face-parsing (MIT-licensed repository). The source URL and local weight hash are recorded in `models/face_parsing_model.json`. No user photographs are uploaded for inference.
-
-Outputs include `tutorial_output/landmark_stages_comparison.png`, raw label maps, `extended_landmarks.json`, and the updated animation. The example notebook ran end to end with 96 points. Across 101 alpha samples, its triangles did not flip or collapse; this is a geometry check, not validation of perceived realism. Both sample necks reach the bottom of the crop, so only their visible portions are represented.
-
-### Hairline refinement
-
-Section 3.2 now traces the predicted frontal skin–hair interface separately in each image, samples eight controls along it, and shows the former geometric offsets as gray crosses. Missing contours are omitted from both meshes. The current selected DPD pair executes with 90 points: 68 face, 8 hairline, 8 canvas, and 6 ear controls; no neck region is visible/detected. See the selected output folder for the regenerated comparison.
-
-## Standalone N-image script
-
-`morph.py` repeats the current notebook's pairwise procedure for each adjacent
-pair: 1 → 2 → 3 → … → N. Each pair independently detects its matching hairline,
-outer-hair, ear/neck controls, retains eight canvas points, and triangulates the
-average landmarks. It does not align to a central face or apply a fixed hull.
-The notebook itself is unchanged.
+The script morphs adjacent images in order: 1 → 2 → 3 → … → N.
+For the included eleven-image sequence on macOS/Linux:
 
 ```bash
-cd ~/Development/face-morphing-tutorial
-/Users/cyrusyang/anaconda3/bin/python morph.py \
-  input/DPD_1_BM12_p5b_*.png --frames 61 --gif --output-dir output/my_sequence
+python morph.py input/DPD_1_BM12_p5b_*.png \
+  --frames 61 --gif --output-dir output/my_sequence
 ```
 
-Explicit paths retain their supplied order. Without paths, supported images in
-`input/` are naturally sorted; the current folder contains multiple face sets,
-so select your sequence explicitly. Defaults are relative to the script:
-`input/`, `models/`, and `output/`. Requires NumPy, OpenCV, dlib, Pillow,
-onnxruntime, and the existing two model files. No Jupyter dependency.
+Alternatively, pass each filename explicitly in the desired order (also works
+in Windows PowerShell):
 
-- `--frames X`: exactly X PNGs in `<output-dir>/morph/`; X must be at least N.
-  Distribute X−1 intervals across N−1 transitions, with any remainder assigned
-  to earlier transitions. Shared keyframes appear once. Eleven images and
-  61 frames give six intervals per transition.
-- `--gif` and `--video`: optional `morph.gif` and `morph.mp4` in the output root.
-- `--fps 10`: playback speed; `--size 400`: square center-cropped canvas.
-- `--input-dir`, `--model-dir`, `--output-dir`: override default folders.
-- `--show-mesh`: draw triangles on exports.
-- `--no-hairline`, `--no-hair-outline`, `--no-ear-neck`: disable extensions.
-- `--overrides FILE`: JSON mapping zero-based image indices to detected
-  ear/neck point names and corrected `[x,y]` canvas coordinates.
+```bash
+python morph.py input/DPD_1_BM12_p5b_01.png input/DPD_1_BM12_p5b_06.png input/DPD_1_BM12_p5b_11.png --frames 61 --gif --output-dir output/my_three_images
+```
 
-Nonempty frame folders are refused to avoid mixing runs. `diagnostics/` holds
-pairwise landmark comparisons; `morph_manifest.json` records points, triangles,
-settings, model hashes, and frame mapping. Missing controls are omitted per
-pair, so adjacent segments can use different meshes. Inspect transitions and
-contours before experimental use.
+Without filenames, the script reads supported images from `input/` in natural
+filename order. The included folder contains multiple face sets, so select a
+sequence explicitly or use `--input-dir` with a folder containing just that set.
 
-Corrected 61-frame example: `output/eleven_notebook_pairwise/morph.gif`.
-The older `output/eleven_example/` is retained for comparison and uses the
-superseded central-anchor method.
+- `--frames X`: save exactly X PNGs in `<output-dir>/morph/`. X must be at least
+  the number of inputs. Transitions receive as equal a number of intervals as
+  possible, without duplicating shared keyframes.
+- `--gif` / `--video`: optionally save `morph.gif` / `morph.mp4`.
+- `--fps 10`: animation playback speed.
+- `--output-dir PATH`: output folder; default is `output/` next to the script.
+- `--input-dir PATH` / `--model-dir PATH`: override the default `input/` / `models/`.
+- `--help`: list all options.
+
+Use a new output folder for each run; the script refuses a nonempty `morph/`
+folder to avoid mixing frames. Landmark previews are saved in `diagnostics/`,
+and run details are saved in `morph_manifest.json`.
+
+## Credits
+
+Adapted from [a-tabaza/face-morphing](https://github.com/a-tabaza/face-morphing),
+which credits [Azmarie/Face-Morphing](https://github.com/Azmarie/Face-Morphing).
+The face-parsing model comes from
+[yakhyo/face-parsing](https://github.com/yakhyo/face-parsing).
