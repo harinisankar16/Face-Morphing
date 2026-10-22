@@ -5,3 +5,5 @@ tutorial_output/
 models/*.onnx
 
 .virtual_documents/
+.venv/
+/output/
